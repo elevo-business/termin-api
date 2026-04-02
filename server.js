@@ -71,12 +71,18 @@ app.post('/termin', async (req, res) => {
 
         const lead = await pipedrive('/leads', {
             title: leadTitle,
-            person_id: person.id,
-            note: `Terminanfrage über termin.elevo.solutions\n\nName: ${fullName}\nE-Mail: ${email}\nUnternehmen: ${unternehmen || '—'}\nBevorzugte Zeit: ${timeNote}\n\nEingegangen: ${timestamp}`
+            person_id: person.id
         });
         console.log(`[TERMIN] Lead erstellt: ID ${lead.id}`);
 
-        // 3. Aktivität (Rückruf-Reminder) erstellen
+        // 3. Notiz zum Lead hinzufügen (separater API-Call, note-Feld in Leads deprecated)
+        await pipedrive('/notes', {
+            content: `<b>Terminanfrage (termin.elevo.solutions)</b><br><br>Name: ${fullName}<br>E-Mail: ${email}<br>Unternehmen: ${unternehmen || '—'}<br>Bevorzugte Zeit: <b>${timeNote}</b><br>Eingegangen: ${timestamp}`,
+            lead_id: lead.id
+        });
+        console.log(`[TERMIN] Notiz erstellt für Lead ${lead.id}`);
+
+        // 4. Aktivität (Rückruf-Reminder) erstellen
         const tomorrow = new Date();
         tomorrow.setDate(tomorrow.getDate() + 1);
         const dueDate = tomorrow.toISOString().split('T')[0];
